@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import InputContainer from "../InputContainer";
 
 const formFields = [
-  { id: 1, label: "First Name", type: "text" },
-  { id: 2, label: "Last Name", type: "text" },
-  { id: 3, label: "Email", type: "email" },
-  { id: 4, label: "Date of Birth", type: "date" },
-  { id: 5, label: "Phone Number", type: "tel" },
+  { id: 1, label: "First Name", type: "text", value: "" },
+  { id: 2, label: "Last Name", type: "text", value: "" },
+  { id: 3, label: "Email", type: "email", value: "" },
+  { id: 4, label: "Date of Birth", type: "date", value: "" },
+  { id: 5, label: "Phone Number", type: "tel", value: "" },
 ];
 
 export function Form(props: { closeFormCB: () => void }) {
@@ -20,6 +20,7 @@ export function Form(props: { closeFormCB: () => void }) {
         id: Number(new Date()),
         label: newField,
         type: "text",
+        value: "",
       },
     ]);
     setNewField("");
@@ -27,6 +28,23 @@ export function Form(props: { closeFormCB: () => void }) {
 
   const removeField = (id: number) => {
     setState(state.filter((field) => field.id !== id));
+  };
+
+  const updateValue = (id: number, value: string) => {
+    setState(
+      state.map((field) => {
+        if (field.id === id) return { ...field, value: value };
+        return field;
+      })
+    );
+  };
+
+  const clearAll = () => {
+    setState(
+      state.map((field) => {
+        return { ...field, value: "" };
+      })
+    );
   };
 
   return (
@@ -38,7 +56,9 @@ export function Form(props: { closeFormCB: () => void }) {
             id={field.id}
             label={field.label}
             type={field.type}
+            value={field.value}
             removeFieldCB={removeField}
+            updateValueCB={updateValue}
           />
         ))}
       </div>
@@ -61,16 +81,23 @@ export function Form(props: { closeFormCB: () => void }) {
 
       <div className="flex gap-4">
         <button
-          className="my-2 w-1/3 rounded-xl bg-purple-500 p-2 text-white hover:bg-purple-700"
+          className="my-2 w-1/4 rounded-xl bg-purple-500 p-2 text-white hover:bg-purple-700"
           type="submit"
         >
           Submit
         </button>
         <button
           onClick={props.closeFormCB}
-          className="my-2 w-1/3 rounded-xl bg-red-500 p-2  text-white hover:bg-red-700"
+          className="my-2 w-1/4 rounded-xl bg-red-500 p-2  text-white hover:bg-red-700"
         >
           Close Form
+        </button>
+
+        <button
+          onClick={clearAll}
+          className="my-2 w-1/4 rounded-xl bg-yellow-500 p-2  text-white hover:bg-yellow-700"
+        >
+          Clear All
         </button>
       </div>
     </div>
