@@ -1,12 +1,8 @@
 import React from "react";
 
-export default function InputContainer(props: {
-  id: number;
-  label: string;
-  type: string;
-}) {
+export default function InputContainer(props: { label: string; type: string }) {
   return (
-    <div key={props.id}>
+    <div>
       <label>{props.label}</label>
       <input
         type={props.type}
