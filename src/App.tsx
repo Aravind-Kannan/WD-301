@@ -1,30 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header";
 import AppContainer from "./AppContainer";
-import InputContainer from "./InputContainer";
-
-const formFields = [
-  { id: 1, label: "First Name", type: "text" },
-  { id: 2, label: "Last Name", type: "text" },
-  { id: 3, label: "Email", type: "email" },
-  { id: 4, label: "Date of Birth", type: "date" },
-  { id: 4, label: "Phone Number", type: "tel" },
-];
+import { Home } from "./components/Home";
+import { Form } from "./components/Form";
 
 function App() {
+  const [state, setState] = useState<string>("HOME");
+
+  const openForm = () => {
+    setState("FORM");
+  };
+
+  const closeForm = () => {
+    setState("HOME");
+  };
+
   return (
     <AppContainer>
       <div className="mx-auto rounded-xl bg-white p-4 shadow-lg">
         <Header title="Welcome to Lesson 5 of $react-typescript with #tailwindcss" />
-        {formFields.map((field) => (
-          <InputContainer id={field.id} label={field.label} type={field.type} />
-        ))}
-        <button
-          className="w-full rounded-xl bg-purple-500 p-2 text-white"
-          type="submit"
-        >
-          Submit
-        </button>
+        {state === "HOME" ? (
+          <Home openFormCB={openForm} />
+        ) : (
+          <Form closeFormCB={closeForm} />
+        )}
       </div>
     </AppContainer>
   );
