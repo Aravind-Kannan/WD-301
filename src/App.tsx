@@ -6,8 +6,10 @@ import { Form } from "./components/Form";
 
 function App() {
   const [state, setState] = useState<string>("HOME");
+  const [formId, setFormId] = useState(0);
 
-  const openForm = () => {
+  const openForm = (id: number) => {
+    setFormId(id);
     setState("FORM");
   };
 
@@ -17,12 +19,12 @@ function App() {
 
   return (
     <AppContainer>
-      <div className="mx-auto rounded-xl bg-white p-4 shadow-lg">
-        <Header title="Welcome to Lesson 5 of $react-typescript with #tailwindcss" />
+      <div className=" mx-auto rounded-xl bg-white p-4 shadow-lg">
+        <Header title="Form Builder" />
         {state === "HOME" ? (
           <Home openFormCB={openForm} />
         ) : (
-          <Form closeFormCB={closeForm} />
+          <Form id={formId} closeFormCB={closeForm} />
         )}
       </div>
     </AppContainer>

@@ -1,51 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import InputContainer from "../InputContainer";
+import { formData } from "../interfaces/FormData";
+import { formField } from "../interfaces/FormField";
+import { getLocalForms, saveLocalForms } from "../Storage";
 
-interface formData {
-  id: number;
-  title: string;
-  formFields: formField[];
-}
-
-interface formField {
-  id: number;
-  label: string;
-  type: string;
-  value: string;
-}
-
-const intialFormFields: formField[] = [
-  { id: 1, label: "First Name", type: "text", value: "" },
-  { id: 2, label: "Last Name", type: "text", value: "" },
-  { id: 3, label: "Email", type: "email", value: "" },
-  { id: 4, label: "Date of Birth", type: "date", value: "" },
-  { id: 5, label: "Phone Number", type: "tel", value: "" },
-];
-
-const getLocalForms: () => formData[] = () => {
-  const savedFormsJSON = localStorage.getItem("savedForms");
-  return savedFormsJSON ? JSON.parse(savedFormsJSON) : [];
-};
-
-const initialState: () => formData = () => {
+const initialState: (id: number) => formData = (id: number) => {
   const localForms = getLocalForms();
 
   if (localForms.length > 0) {
-    return localForms[0];
+    return localForms.filter((item) => item.id === id)[0];
   }
 
   const newForm = {
     id: Number(new Date()),
     title: "Untitled Form",
-    formFields: intialFormFields,
+    formFields: [],
   };
 
   saveLocalForms([...localForms, newForm]);
   return newForm;
-};
-
-const saveLocalForms = (localForms: formData[]) => {
-  localStorage.setItem("savedForms", JSON.stringify(localForms));
 };
 
 const saveFormData = (currentState: formData) => {
@@ -56,15 +29,14 @@ const saveFormData = (currentState: formData) => {
   saveLocalForms(updatedLocalForms);
 };
 
-export function Form(props: { closeFormCB: () => void }) {
-  const [state, setState] = useState(() => initialState());
+export function Form(props: { id: number; closeFormCB: () => void }) {
+  const [state, setState] = useState(() => initialState(props.id));
   const [newField, setNewField] = useState("");
+  const [newFieldType, setNewFieldType] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // No dependencies => Mount and Unmount of component
   useEffect(() => {
     console.log("Component Mounted!");
-    const oldTitle = document.title;
     document.title = "Form Editor";
     titleRef.current?.focus();
     return () => {
@@ -91,12 +63,13 @@ export function Form(props: { closeFormCB: () => void }) {
         {
           id: Number(new Date()),
           label: newField,
-          type: "text",
+          type: newFieldType,
           value: "",
         },
       ],
     });
     setNewField("");
+    setNewFieldType("");
   };
 
   const removeField = (id: number) => {
@@ -128,6 +101,7 @@ export function Form(props: { closeFormCB: () => void }) {
   return (
     <div className="flex flex-col gap-2 divide-y-2 divide-dotted p-4">
       <input
+        placeholder="Title of Form"
         type="text"
         value={state.title}
         className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
@@ -151,11 +125,21 @@ export function Form(props: { closeFormCB: () => void }) {
       </div>
       <div className="flex gap-2">
         <input
+          placeholder="Form Field"
           type="text"
           value={newField}
           className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
           onChange={(e) => {
             setNewField(e.target.value);
+          }}
+        />
+        <input
+          placeholder="Form Field Type"
+          type="text"
+          value={newFieldType}
+          className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+          onChange={(e) => {
+            setNewFieldType(e.target.value);
           }}
         />
         <button
