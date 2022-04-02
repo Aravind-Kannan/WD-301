@@ -1,11 +1,10 @@
 import React from "react";
 
-export default function InputContainer(props: {
+export default function QuizInputContainer(props: {
   id: number;
   label: string;
   value: string;
   type: string;
-  removeFieldCB: (id: number) => void;
   updateValueCB: (id: number, value: string) => void;
 }) {
   return (
@@ -20,12 +19,6 @@ export default function InputContainer(props: {
             props.updateValueCB(props.id, e.target.value);
           }}
         />
-        <button
-          onClick={(_) => props.removeFieldCB(props.id)}
-          className="m-1 rounded-xl bg-red-500 px-2 text-white hover:bg-red-700"
-        >
-          Remove
-        </button>
       </div>
     </>
   );

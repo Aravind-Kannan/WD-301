@@ -1,6 +1,6 @@
 import { Link, navigate } from "raviger";
 import React, { useState, useEffect, useRef } from "react";
-import InputContainer from "../InputContainer";
+import InputContainer from "./InputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
 
@@ -83,11 +83,21 @@ export function Form(props: { id: number }) {
     });
   };
 
-  const updateValue = (id: number, value: string) => {
+  const updateLabel = (id: number, label: string) => {
     setState({
       ...state,
       formFields: state.formFields.map((field) => {
-        if (field.id === id) return { ...field, value: value };
+        if (field.id === id) return { ...field, label: label };
+        return field;
+      }),
+    });
+  };
+
+  const updateType = (id: number, type: string) => {
+    setState({
+      ...state,
+      formFields: state.formFields.map((field) => {
+        if (field.id === id) return { ...field, type: type };
         return field;
       }),
     });
@@ -123,7 +133,8 @@ export function Form(props: { id: number }) {
             type={field.type}
             value={field.value}
             removeFieldCB={removeField}
-            updateValueCB={updateValue}
+            updateLabelCB={updateLabel}
+            updateTypeCB={updateType}
           />
         ))}
       </div>
@@ -154,7 +165,7 @@ export function Form(props: { id: number }) {
         </button>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-1">
         <button
           onClick={(_) => saveFormData(state)}
           className="my-2 w-1/4 rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
@@ -174,6 +185,12 @@ export function Form(props: { id: number }) {
         >
           Clear All
         </button>
+        <Link
+          href={`/preview/${props.id}`}
+          className="my-2 w-1/4 rounded-xl bg-green-500 p-2 text-center text-white hover:bg-green-700"
+        >
+          Preview
+        </Link>
       </div>
     </div>
   );

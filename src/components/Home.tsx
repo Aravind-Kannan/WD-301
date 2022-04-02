@@ -62,8 +62,16 @@ export function Home() {
           })
           .map((item) => {
             return (
-              <div key={item.id} className="flex flex-row items-center">
-                <div className="flex-1">{item.title}</div>
+              <div
+                key={item.id}
+                className="m-2 flex flex-row items-center rounded-xl bg-gray-100 p-2"
+              >
+                <div className="flex w-full flex-col">
+                  <div className="flex-1">{item.title}</div>
+                  <div className="text-gray-500">
+                    {item.formFields.length} Questions
+                  </div>
+                </div>
                 <Link
                   href={`/forms/${item.id}`}
                   className="m-2 rounded-xl bg-blue-500 p-2 text-white hover:bg-blue-700"
