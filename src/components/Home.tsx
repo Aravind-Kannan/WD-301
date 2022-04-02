@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { getLocalForms, saveLocalForms } from "../Storage";
+import { Link, useQueryParams } from "raviger";
 
-export function Home(props: { openFormCB: (id: number) => void }) {
+export function Home() {
+  const [{ search }, setQuery] = useQueryParams();
+  const [searchString, setSearchString] = useState("");
+
   const [state, setState] = useState(() => getLocalForms());
 
   useEffect(() => {
@@ -32,26 +36,49 @@ export function Home(props: { openFormCB: (id: number) => void }) {
 
   return (
     <div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setQuery({ search: searchString });
+        }}
+      >
+        <input
+          placeholder="Search"
+          name="search"
+          type="text"
+          value={searchString}
+          className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+          onChange={(e) => {
+            setSearchString(e.target.value);
+          }}
+        />
+      </form>
       <div className="flex flex-col">
-        {state.map((item) => {
-          return (
-            <div key={item.id} className="flex flex-row items-center">
-              <div className="flex-1">{item.title}</div>
-              <button
-                onClick={(_) => props.openFormCB(item.id)}
-                className="m-2 rounded-xl bg-blue-500 p-2 text-white hover:bg-blue-700"
-              >
-                Edit
-              </button>
-              <button
-                onClick={(_) => removeForm(item.id)}
-                className="m-2 rounded-xl bg-red-500 p-2 text-white hover:bg-red-700"
-              >
-                Remove
-              </button>
-            </div>
-          );
-        })}
+        {state
+          .filter((form) => {
+            return form.title
+              .toLowerCase()
+              .includes(search?.toLowerCase() || "");
+          })
+          .map((item) => {
+            return (
+              <div key={item.id} className="flex flex-row items-center">
+                <div className="flex-1">{item.title}</div>
+                <Link
+                  href={`/forms/${item.id}`}
+                  className="m-2 rounded-xl bg-blue-500 p-2 text-white hover:bg-blue-700"
+                >
+                  Edit
+                </Link>
+                <button
+                  onClick={(_) => removeForm(item.id)}
+                  className="m-2 rounded-xl bg-red-500 p-2 text-white hover:bg-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            );
+          })}
       </div>
 
       <button

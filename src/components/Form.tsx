@@ -1,7 +1,7 @@
+import { Link, navigate } from "raviger";
 import React, { useState, useEffect, useRef } from "react";
 import InputContainer from "../InputContainer";
 import { formData } from "../interfaces/FormData";
-import { formField } from "../interfaces/FormField";
 import { getLocalForms, saveLocalForms } from "../Storage";
 
 const initialState: (id: number) => formData = (id: number) => {
@@ -29,11 +29,15 @@ const saveFormData = (currentState: formData) => {
   saveLocalForms(updatedLocalForms);
 };
 
-export function Form(props: { id: number; closeFormCB: () => void }) {
+export function Form(props: { id: number }) {
   const [state, setState] = useState(() => initialState(props.id));
   const [newField, setNewField] = useState("");
   const [newFieldType, setNewFieldType] = useState("");
   const titleRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    state.id !== props.id && navigate(`/forms/${props.id}`);
+  }, [state.id, props.id]);
 
   useEffect(() => {
     console.log("Component Mounted!");
@@ -153,20 +157,20 @@ export function Form(props: { id: number; closeFormCB: () => void }) {
       <div className="flex gap-4">
         <button
           onClick={(_) => saveFormData(state)}
-          className="my-2 w-1/4 rounded-xl bg-purple-500 p-2 text-white hover:bg-purple-700"
+          className="my-2 w-1/4 rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
         >
           Submit
         </button>
-        <button
-          onClick={props.closeFormCB}
-          className="my-2 w-1/4 rounded-xl bg-red-500 p-2  text-white hover:bg-red-700"
+        <Link
+          href="/"
+          className="my-2 w-1/4 rounded-xl bg-red-500 p-2 text-center text-white hover:bg-red-700"
         >
           Close Form
-        </button>
+        </Link>
 
         <button
           onClick={clearAll}
-          className="my-2 w-1/4 rounded-xl bg-yellow-500 p-2  text-white hover:bg-yellow-700"
+          className="my-2 w-1/4 rounded-xl bg-yellow-500 p-2 text-center text-white hover:bg-yellow-700"
         >
           Clear All
         </button>
