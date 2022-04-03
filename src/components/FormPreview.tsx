@@ -35,7 +35,7 @@ export function FormPreview(props: { id: number }) {
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    state.id !== props.id && navigate(`/forms/${props.id}`);
+    state.id !== props.id && navigate(`/preview/${props.id}`);
   }, [state.id, props.id]);
 
   useEffect(() => {
@@ -51,13 +51,14 @@ export function FormPreview(props: { id: number }) {
     let timeout = setTimeout(() => {
       saveFormData(state);
       console.log("state saved to localStorage");
-    }, 1000);
+    }, 500);
 
     return () => {
       clearTimeout(timeout);
     };
   }, [state]);
 
+  // mark for removal
   const updateValue = (id: number, value: string) => {
     setState({
       ...state,
@@ -90,65 +91,86 @@ export function FormPreview(props: { id: number }) {
 
   let field = state.formFields[fieldNumber];
 
-  return (
-    <div className="flex flex-col gap-2 p-4">
-      <label className="my-2 flex-1 p-2 text-lg font-bold">{state.title}</label>
-      <h3>
-        {fieldNumber + 1} out of {state.formFields.length} Questions
-      </h3>
-      <div className="rounded-xl bg-gray-100 p-4">
-        {
-          <QuizInputContainer
-            key={field.id}
-            id={field.id}
-            label={field.label}
-            type={field.type}
-            value={field.value}
-            updateValueCB={updateValue}
-          />
-        }
-      </div>
+  if (state.formFields.length !== 0) {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <label className="my-2 flex-1 p-2 text-lg font-bold">
+          {state.title}
+        </label>
+        <h3>
+          {fieldNumber + 1} out of {state.formFields.length} Questions
+        </h3>
+        <div className="rounded-xl bg-gray-100 p-4">
+          {
+            <QuizInputContainer
+              key={field.id}
+              id={field.id}
+              label={field.label}
+              type={field.type}
+              value={field.value}
+              updateValueCB={updateValue}
+            />
+          }
+        </div>
 
-      <div className="flex gap-1">
-        {fieldNumber > 0 && (
-          <button
-            onClick={(_) => previousFieldNumber()}
-            className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
-          >
-            Previous
-          </button>
-        )}
+        <div className="flex gap-1">
+          {fieldNumber > 0 && (
+            <button
+              onClick={(_) => previousFieldNumber()}
+              className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
+            >
+              Previous
+            </button>
+          )}
 
-        {fieldNumber < state.formFields.length - 1 && (
+          {fieldNumber < state.formFields.length - 1 && (
+            <button
+              onClick={(_) => nextFieldNumber()}
+              className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
+            >
+              Next
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1">
           <button
-            onClick={(_) => nextFieldNumber()}
-            className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
+            onClick={(_) => saveFormData(state)}
+            className="my-2  rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
           >
-            Next
+            Submit
           </button>
-        )}
+          <Link
+            href="/"
+            className="my-2  rounded-xl bg-red-500 p-2 text-center text-white hover:bg-red-700"
+          >
+            Close Form
+          </Link>
+
+          <button
+            onClick={clearAll}
+            className="my-2  rounded-xl bg-yellow-500 p-2 text-center text-white hover:bg-yellow-700"
+          >
+            Clear All
+          </button>
+        </div>
       </div>
-      <div className="flex gap-1">
-        <button
-          onClick={(_) => saveFormData(state)}
-          className="my-2  rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
-        >
-          Submit
-        </button>
+    );
+  } else {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <label className="my-2 flex-1 p-2 text-lg font-bold">
+          {state.title}
+        </label>
+        <h3 className="rounded-lg bg-gray-200 p-4">
+          Form has no fields created! 😬
+        </h3>
         <Link
           href="/"
           className="my-2  rounded-xl bg-red-500 p-2 text-center text-white hover:bg-red-700"
         >
           Close Form
         </Link>
-
-        <button
-          onClick={clearAll}
-          className="my-2  rounded-xl bg-yellow-500 p-2 text-center text-white hover:bg-yellow-700"
-        >
-          Clear All
-        </button>
       </div>
-    </div>
-  );
+    );
+  }
 }

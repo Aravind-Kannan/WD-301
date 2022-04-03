@@ -12,7 +12,7 @@ export function Home() {
     let timeout = setTimeout(() => {
       saveLocalForms(state);
       console.log("state saved to localStorage");
-    }, 1000);
+    }, 500);
 
     return () => {
       clearTimeout(timeout);

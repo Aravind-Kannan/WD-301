@@ -52,7 +52,7 @@ export function Form(props: { id: number }) {
     let timeout = setTimeout(() => {
       saveFormData(state);
       console.log("state saved to localStorage");
-    }, 1000);
+    }, 500);
 
     return () => {
       clearTimeout(timeout);
@@ -99,15 +99,6 @@ export function Form(props: { id: number }) {
       formFields: state.formFields.map((field) => {
         if (field.id === id) return { ...field, type: type };
         return field;
-      }),
-    });
-  };
-
-  const clearAll = () => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        return { ...field, value: "" };
       }),
     });
   };
@@ -168,26 +159,19 @@ export function Form(props: { id: number }) {
       <div className="flex gap-1">
         <button
           onClick={(_) => saveFormData(state)}
-          className="my-2 w-1/4 rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
+          className="my-2 w-full rounded-xl bg-purple-500 p-2 text-center text-white hover:bg-purple-700"
         >
-          Submit
+          Save Form
         </button>
         <Link
           href="/"
-          className="my-2 w-1/4 rounded-xl bg-red-500 p-2 text-center text-white hover:bg-red-700"
+          className="my-2 w-full rounded-xl bg-red-500 p-2 text-center text-white hover:bg-red-700"
         >
           Close Form
         </Link>
-
-        <button
-          onClick={clearAll}
-          className="my-2 w-1/4 rounded-xl bg-yellow-500 p-2 text-center text-white hover:bg-yellow-700"
-        >
-          Clear All
-        </button>
         <Link
           href={`/preview/${props.id}`}
-          className="my-2 w-1/4 rounded-xl bg-green-500 p-2 text-center text-white hover:bg-green-700"
+          className="my-2 w-full rounded-xl bg-green-500 p-2 text-center text-white hover:bg-green-700"
         >
           Preview
         </Link>
