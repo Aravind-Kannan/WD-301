@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import QuizInputContainer from "./QuizInputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
+import { formField } from "../interfaces/FormField";
 
 const initialState: (id: number) => formData = (id: number) => {
   const localForms = getLocalForms();
@@ -29,9 +30,29 @@ const saveFormData = (currentState: formData) => {
   saveLocalForms(updatedLocalForms);
 };
 
+const initialFormFields: (id: number) => formField[] = (id: number) => {
+  const localForms = getLocalForms();
+
+  if (localForms.length > 0) {
+    return localForms.filter((item) => item.id === id)[0].formFields;
+  }
+
+  const newForm = {
+    id: Number(new Date()),
+    title: "Untitled Form",
+    formFields: [],
+  };
+
+  saveLocalForms([...localForms, newForm]);
+  return newForm.formFields;
+};
+
 export function FormPreview(props: { id: number }) {
   const [state, setState] = useState(() => initialState(props.id));
   const [fieldNumber, setFieldNumber] = useState(0);
+  const [formFields, setFormFields] = useState<formField[]>(
+    initialFormFields(props.id)
+  );
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,22 +81,20 @@ export function FormPreview(props: { id: number }) {
 
   // mark for removal
   const updateValue = (id: number, value: string) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
+    setFormFields(
+      formFields?.map((field) => {
         if (field.id === id) return { ...field, value: value };
         return field;
-      }),
-    });
+      })
+    );
   };
 
   const clearAll = () => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
+    setFormFields(
+      state.formFields.map((field) => {
         return { ...field, value: "" };
-      }),
-    });
+      })
+    );
   };
 
   const previousFieldNumber = () => {
@@ -91,7 +110,8 @@ export function FormPreview(props: { id: number }) {
 
   let field = state.formFields[fieldNumber];
 
-  if (state.formFields.length !== 0) {
+  if (formFields.length !== 0) {
+    let value = formFields ? formFields[fieldNumber].value : "";
     return (
       <div className="flex flex-col gap-2 p-4">
         <label className="my-2 flex-1 p-2 text-lg font-bold">
@@ -107,7 +127,7 @@ export function FormPreview(props: { id: number }) {
               id={field.id}
               label={field.label}
               type={field.type}
-              value={field.value}
+              value={value}
               updateValueCB={updateValue}
             />
           }
