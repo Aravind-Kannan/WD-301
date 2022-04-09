@@ -3,6 +3,17 @@ import React, { useState, useEffect, useRef } from "react";
 import InputContainer from "./InputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
+import { formField } from "../interfaces/FormField";
+
+const initialFormFieldsList: formField[] = [
+  {
+    kind: "dropdown",
+    id: 1,
+    label: "Priority",
+    options: ["Low", "High"],
+    value: "",
+  },
+];
 
 const initialState: (id: number) => formData = (id: number) => {
   const localForms = getLocalForms();
@@ -14,8 +25,10 @@ const initialState: (id: number) => formData = (id: number) => {
   const newForm = {
     id: Number(new Date()),
     title: "Untitled Form",
-    formFields: [],
+    formFields: initialFormFieldsList,
   };
+
+  console.log(newForm);
 
   saveLocalForms([...localForms, newForm]);
   return newForm;
@@ -65,9 +78,13 @@ export function Form(props: { id: number }) {
       formFields: [
         ...state.formFields,
         {
+          kind: "text",
           id: Number(new Date()),
           label: newField,
-          type: newFieldType,
+          fieldType:
+            newFieldType === "email" || newFieldType === "date"
+              ? newFieldType
+              : "text",
           value: "",
         },
       ],
@@ -116,18 +133,40 @@ export function Form(props: { id: number }) {
         ref={titleRef}
       />
       <div>
-        {state.formFields.map((field) => (
-          <InputContainer
-            key={field.id}
-            id={field.id}
-            label={field.label}
-            type={field.type}
-            value={field.value}
-            removeFieldCB={removeField}
-            updateLabelCB={updateLabel}
-            updateTypeCB={updateType}
-          />
-        ))}
+        {state.formFields.map((field) => {
+          switch (field.kind) {
+            case "text":
+              return (
+                <InputContainer
+                  key={field.id}
+                  id={field.id}
+                  label={field.label}
+                  type={field.fieldType}
+                  value={field.value}
+                  removeFieldCB={removeField}
+                  updateLabelCB={updateLabel}
+                  updateTypeCB={updateType}
+                />
+              );
+            case "dropdown":
+              return (
+                <select
+                  className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+                  value={field.value}
+                  onChange={(e) => {
+                    updateLabel(field.id, e.target.value);
+                  }}
+                >
+                  <option value="">Select an option</option>
+                  {field.options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              );
+          }
+        })}
       </div>
       <div className="flex gap-2">
         <input
@@ -141,7 +180,6 @@ export function Form(props: { id: number }) {
         />
         <input
           placeholder="Form Field Type"
-          type="text"
           value={newFieldType}
           className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
           onChange={(e) => {

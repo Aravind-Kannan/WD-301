@@ -5,6 +5,16 @@ import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
 import { formField } from "../interfaces/FormField";
 
+const initialFormFieldsList: formField[] = [
+  {
+    kind: "dropdown",
+    id: 1,
+    label: "Priority",
+    options: ["Low", "High"],
+    value: "",
+  },
+];
+
 const initialState: (id: number) => formData = (id: number) => {
   const localForms = getLocalForms();
 
@@ -15,7 +25,7 @@ const initialState: (id: number) => formData = (id: number) => {
   const newForm = {
     id: Number(new Date()),
     title: "Untitled Form",
-    formFields: [],
+    formFields: initialFormFieldsList,
   };
 
   saveLocalForms([...localForms, newForm]);
@@ -40,7 +50,7 @@ const initialFormFields: (id: number) => formField[] = (id: number) => {
   const newForm = {
     id: Number(new Date()),
     title: "Untitled Form",
-    formFields: [],
+    formFields: initialFormFieldsList,
   };
 
   saveLocalForms([...localForms, newForm]);
@@ -121,16 +131,37 @@ export function FormPreview(props: { id: number }) {
           {fieldNumber + 1} out of {state.formFields.length} Questions
         </h3>
         <div className="rounded-xl bg-gray-100 p-4">
-          {
-            <QuizInputContainer
-              key={field.id}
-              id={field.id}
-              label={field.label}
-              type={field.type}
-              value={value}
-              updateValueCB={updateValue}
-            />
-          }
+          {(field: formField) => {
+            if (field.kind === "text") {
+              return (
+                <QuizInputContainer
+                  key={field.id}
+                  id={field.id}
+                  label={field.label}
+                  type={field.fieldType}
+                  value={value}
+                  updateValueCB={updateValue}
+                />
+              );
+            } else if (field.kind === "dropdown") {
+              return (
+                <select
+                  className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+                  value={field.value}
+                  onChange={(e) => {
+                    updateValue(field.id, e.target.value);
+                  }}
+                >
+                  <option value="">Select an option</option>
+                  {field.options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              );
+            }
+          }}
         </div>
 
         <div className="flex gap-1">

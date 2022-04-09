@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { getLocalForms, saveLocalForms } from "../Storage";
 import { Link, useQueryParams } from "raviger";
+import { formField } from "../interfaces/FormField";
+
+const initialFormFieldsList: formField[] = [
+  {
+    kind: "dropdown",
+    id: 1,
+    label: "Priority",
+    options: ["Low", "High"],
+    value: "",
+  },
+];
 
 export function Home() {
   const [{ search }, setQuery] = useQueryParams();
@@ -25,7 +36,7 @@ export function Home() {
       {
         id: Number(new Date()),
         title: "Untitled Form",
-        formFields: [],
+        formFields: initialFormFieldsList,
       },
     ]);
   };
