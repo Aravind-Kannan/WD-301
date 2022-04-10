@@ -4,6 +4,7 @@ import QuizInputContainer from "./QuizInputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
 import { formField } from "../interfaces/FormField";
+import QuizMultiInputContainer from "./QuizMultiInputContainer";
 
 const initialFormFieldsList: formField[] = [
   {
@@ -131,7 +132,7 @@ export function FormPreview(props: { id: number }) {
           {fieldNumber + 1} out of {state.formFields.length} Questions
         </h3>
         <div className="rounded-xl bg-gray-100 p-4">
-          {(field: formField) => {
+          {((field: formField) => {
             if (field.kind === "text") {
               return (
                 <QuizInputContainer
@@ -143,25 +144,55 @@ export function FormPreview(props: { id: number }) {
                   updateValueCB={updateValue}
                 />
               );
-            } else if (field.kind === "dropdown") {
+            } else if (field.kind === "textArea") {
               return (
-                <select
-                  className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
-                  value={field.value}
-                  onChange={(e) => {
-                    updateValue(field.id, e.target.value);
-                  }}
-                >
-                  <option value="">Select an option</option>
-                  {field.options.map((option, index) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label>{field.label}</label>
+                  <div className="flex">
+                    <textarea
+                      className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+                      value={value}
+                      onChange={(e) => {
+                        updateValue(field.id, e.target.value);
+                      }}
+                    ></textarea>
+                  </div>
+                </div>
               );
+            } else if (
+              field.kind === "dropdown" ||
+              field.kind === "radioInput" ||
+              field.kind === "multipleSelect"
+            ) {
+              return (
+                <QuizMultiInputContainer
+                  key={field.id}
+                  id={field.id}
+                  label={field.label}
+                  kind={field.kind}
+                  options={field.options}
+                  value={value}
+                  updateValueCB={updateValue}
+                ></QuizMultiInputContainer>
+              );
+              // return (
+              //   <select
+              //     className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
+              //     value={field.value}
+              //     onChange={(e) => {
+              //       updateValue(field.id, e.target.value);
+              //     }}
+              //   >
+              //     <option value="">Select an option</option>
+              //     {field.options.map((option, index) => (
+              //       <option key={index} value={option}>
+              //         {option}
+              //       </option>
+              //     ))}
+              //   </select>
+              // );
             }
-          }}
+          })(field)}
         </div>
 
         <div className="flex gap-1">

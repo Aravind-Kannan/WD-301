@@ -5,10 +5,31 @@ import { formField } from "../interfaces/FormField";
 
 const initialFormFieldsList: formField[] = [
   {
-    kind: "dropdown",
+    kind: "text",
     id: 1,
-    label: "Priority",
-    options: ["Low", "High"],
+    label: "Name",
+    value: "",
+    fieldType: "text",
+  },
+  {
+    kind: "textArea",
+    id: 2,
+    label: "College Address",
+    value: "",
+    fieldType: "text",
+  },
+  {
+    kind: "multipleSelect",
+    id: 3,
+    label: "Colors",
+    options: ["Red", "Blue", "Green"],
+    value: "",
+  },
+  {
+    kind: "radioInput",
+    id: 4,
+    label: "Gender",
+    options: ["Male", "Female"],
     value: "",
   },
 ];

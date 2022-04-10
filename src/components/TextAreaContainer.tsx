@@ -1,14 +1,15 @@
 import React from "react";
-import { textFieldTypes } from "../interfaces/FormField";
+import { fieldTypes, textFieldTypes } from "../interfaces/FormField";
 
-export default function InputContainer(props: {
+export default function TextAreaContainer(props: {
   id: number;
   label: string;
   value: string;
-  type: string;
+  kind: fieldTypes;
   removeFieldCB: (id: number) => void;
   updateLabelCB: (id: number, label: string) => void;
   updateTypeCB: (id: number, type: textFieldTypes) => void;
+  updateKindCB: (id: number, kind: fieldTypes) => void;
 }) {
   return (
     <>
@@ -24,15 +25,17 @@ export default function InputContainer(props: {
           }}
         />
         <select
-          value={props.type}
-          className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 bg-gray-200 p-2"
+          value={props.kind}
+          className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
           onChange={(e) => {
-            props.updateTypeCB(props.id, e.target.value as textFieldTypes);
+            props.updateKindCB(props.id, e.target.value as fieldTypes);
           }}
         >
           <option value="text">Text</option>
-          <option value="date">Date</option>
-          <option value="email">Email</option>
+          <option value="dropdown">Dropdown</option>
+          <option value="textArea">Text Area</option>
+          <option value="multipleSelect">Multi Select</option>
+          <option value="radioInput">Radio Input</option>
         </select>
         <button
           onClick={(_) => props.removeFieldCB(props.id)}
