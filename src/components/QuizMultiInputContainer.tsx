@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { MultiSelect } from "react-multi-select-component";
+import React from "react";
+// import { MultiSelect } from "react-multi-select-component";
 import { fieldTypes } from "../interfaces/FormField";
 
 export default function QuizMultiInputContainer(props: {
@@ -14,46 +14,11 @@ export default function QuizMultiInputContainer(props: {
     props.updateValueCB(id, option);
   };
 
-  // console.log("Value:", props.value);
-  // console.log("Array:", props.value.split(","));
-
-  const [selected, setSelected] = useState(() => {
-    if (props.value.split(",").length > 0) {
-      return props.value
-        .split(",")
-        .filter((option) => option.length > 0)
-        .map((option) => {
-          return { value: option, label: option };
-        });
-    } else {
-      return [];
-    }
-  });
-
-  // const [selected, setSelected] = useState([]);
-  console.log("Selected:", selected);
-
-  useEffect(() => {
-    let timeout = setTimeout(() => {
-      let selectedStrings = selected.map((item) => item["value"]);
-      console.log("Sending:", selectedStrings.join(","));
-      props.updateValueCB(props.id, selectedStrings.join(","));
-    }, 1000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [selected, props]);
-
   return (
     <>
       <label>{props.label}</label>
       <div className="flex">
         {(() => {
-          const selectOptions = props.options.map((option) => ({
-            value: option,
-            label: option,
-          }));
           if (props.kind === "dropdown") {
             return (
               <select
@@ -94,13 +59,72 @@ export default function QuizMultiInputContainer(props: {
           } else if (props.kind === "multipleSelect") {
             return (
               <div>
-                <MultiSelect
+                {/* <MultiSelect
                   className=""
                   options={selectOptions}
                   value={selected}
                   onChange={setSelected}
                   labelledBy="Select"
-                />
+                /> */}
+                <button
+                  data-bs-toggle="collapse"
+                  data-bs-target={`#collapse${props.id}`}
+                  aria-expanded="false"
+                  aria-controls={`collapse${props.id}`}
+                  className="w-full rounded-t-lg bg-white p-2"
+                >
+                  <div className="float-left pl-2" id="Multi">
+                    {props.value.length === 0
+                      ? "--- Select options ---"
+                      : props.value}
+                  </div>
+                  <div className="float-right pr-2 text-gray-500">
+                    <i className="fa-solid fa-angle-down"></i>
+                  </div>
+                </button>
+                <div
+                  className="collapse rounded-b-lg bg-white p-2"
+                  id={`collapse${props.id}`}
+                >
+                  {props.options.map((opt, index) => (
+                    <div key={index}>
+                      <input
+                        type="checkbox"
+                        id={`${opt}${index}`}
+                        name={props.label}
+                        value={opt}
+                        className=""
+                        checked={props.value.split(",").indexOf(opt) !== -1}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          let elem = document.getElementById("Multi");
+
+                          if (elem) {
+                            let valArray = elem.innerHTML.split(",");
+
+                            let removeElementFromArray = (element: string) => {
+                              if (valArray.includes(element))
+                                valArray.splice(valArray.indexOf(element), 1);
+                            };
+
+                            removeElementFromArray("");
+                            removeElementFromArray("--- Select options ---");
+
+                            valArray.includes(value)
+                              ? removeElementFromArray(value)
+                              : valArray.push(value);
+
+                            elem.innerHTML = valArray.join(",");
+                            updateCheckedField(props.id, elem.innerHTML);
+                          }
+                        }}
+                      />
+                      <label className="ml-2" htmlFor={`${opt}${index}`}>
+                        {opt}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           }
