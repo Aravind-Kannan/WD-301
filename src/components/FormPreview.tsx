@@ -1,5 +1,5 @@
 import { Link, navigate } from "raviger";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useReducer } from "react";
 import QuizInputContainer from "./QuizInputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
@@ -58,11 +58,77 @@ const initialFormFields: (id: number) => formField[] = (id: number) => {
   return newForm.formFields;
 };
 
+type clearAll = {
+  type: "clear_all";
+  formFields: formField[];
+};
+
+type updateValue = {
+  type: "update_value";
+  id: number;
+  value: string;
+  formFields: formField[];
+};
+
+type formFieldAction = clearAll | updateValue;
+
+const formFieldReducer = (
+  state: formField[],
+  action: formFieldAction
+): formField[] => {
+  switch (action.type) {
+    case "update_value": {
+      return action.formFields.map((field: formField) => {
+        if (field.id === action.id) return { ...field, value: action.value };
+        return field;
+      });
+    }
+    case "clear_all": {
+      return action.formFields.map((field: formField) => {
+        return { ...field, value: "" };
+      });
+    }
+  }
+};
+
+type PreviousField = {
+  type: "previous_field";
+  fieldNumber: number;
+};
+type NextField = {
+  type: "next_field";
+  fieldNumber: number;
+  length: number;
+};
+
+type FieldNumberAction = PreviousField | NextField;
+
+const fieldNumberReducer = (
+  state: number,
+  action: FieldNumberAction
+): number => {
+  switch (action.type) {
+    case "previous_field": {
+      return action.fieldNumber > 0
+        ? action.fieldNumber - 1
+        : action.fieldNumber;
+    }
+
+    case "next_field": {
+      return action.fieldNumber + 1 < action.length
+        ? action.fieldNumber + 1
+        : action.fieldNumber;
+    }
+  }
+};
+
 export function FormPreview(props: { id: number }) {
   const [state, setState] = useState(() => initialState(props.id));
-  const [fieldNumber, setFieldNumber] = useState(0);
-  const [formFields, setFormFields] = useState<formField[]>(
-    initialFormFields(props.id)
+  const [fieldNumber, dispatchFieldNumber] = useReducer(fieldNumberReducer, 0);
+  const [formFields, dispatchFormFields] = useReducer(
+    formFieldReducer,
+    [] as formField[],
+    () => initialFormFields(props.id)
   );
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -90,34 +156,22 @@ export function FormPreview(props: { id: number }) {
     };
   }, [state]);
 
-  // mark for removal
-  const updateValue = (id: number, value: string) => {
-    setFormFields(
-      formFields?.map((field) => {
-        if (field.id === id) return { ...field, value: value };
-        return field;
-      })
-    );
-  };
+  // const updateValue = (id: number, value: string) => {
+  //   setFormFields(
+  //     formFields?.map((field) => {
+  //       if (field.id === id) return { ...field, value: value };
+  //       return field;
+  //     })
+  //   );
+  // };
 
-  const clearAll = () => {
-    setFormFields(
-      state.formFields.map((field) => {
-        return { ...field, value: "" };
-      })
-    );
-  };
-
-  const previousFieldNumber = () => {
-    if (fieldNumber > 0) {
-      setFieldNumber(fieldNumber - 1);
-    }
-  };
-  const nextFieldNumber = () => {
-    if (fieldNumber + 1 < state.formFields.length) {
-      setFieldNumber(fieldNumber + 1);
-    }
-  };
+  // const clearAll = () => {
+  //   setFormFields(
+  //     state.formFields.map((field) => {
+  //       return { ...field, value: "" };
+  //     })
+  //   );
+  // };
 
   let field = state.formFields[fieldNumber];
 
@@ -141,7 +195,14 @@ export function FormPreview(props: { id: number }) {
                   label={field.label}
                   type={field.fieldType}
                   value={value}
-                  updateValueCB={updateValue}
+                  updateValueCB={(id, value) =>
+                    dispatchFormFields({
+                      type: "update_value",
+                      id,
+                      value,
+                      formFields,
+                    })
+                  }
                 />
               );
             } else if (field.kind === "textArea") {
@@ -153,7 +214,13 @@ export function FormPreview(props: { id: number }) {
                       className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
                       value={value}
                       onChange={(e) => {
-                        updateValue(field.id, e.target.value);
+                        dispatchFormFields({
+                          type: "update_value",
+                          formFields: formFields,
+                          id: field.id,
+                          value: e.target.value,
+                        });
+                        // updateValue(field.id, e.target.value);
                       }}
                     ></textarea>
                   </div>
@@ -172,25 +239,16 @@ export function FormPreview(props: { id: number }) {
                   kind={field.kind}
                   options={field.options}
                   value={value}
-                  updateValueCB={updateValue}
+                  updateValueCB={(id, value) =>
+                    dispatchFormFields({
+                      type: "update_value",
+                      id,
+                      value,
+                      formFields,
+                    })
+                  }
                 ></QuizMultiInputContainer>
               );
-              // return (
-              //   <select
-              //     className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
-              //     value={field.value}
-              //     onChange={(e) => {
-              //       updateValue(field.id, e.target.value);
-              //     }}
-              //   >
-              //     <option value="">Select an option</option>
-              //     {field.options.map((option, index) => (
-              //       <option key={index} value={option}>
-              //         {option}
-              //       </option>
-              //     ))}
-              //   </select>
-              // );
             }
           })(field)}
         </div>
@@ -198,7 +256,9 @@ export function FormPreview(props: { id: number }) {
         <div className="flex gap-1">
           {fieldNumber > 0 && (
             <button
-              onClick={(_) => previousFieldNumber()}
+              onClick={(_) =>
+                dispatchFieldNumber({ type: "previous_field", fieldNumber })
+              }
               className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
             >
               Previous
@@ -207,7 +267,13 @@ export function FormPreview(props: { id: number }) {
 
           {fieldNumber < state.formFields.length - 1 && (
             <button
-              onClick={(_) => nextFieldNumber()}
+              onClick={(_) =>
+                dispatchFieldNumber({
+                  type: "next_field",
+                  fieldNumber: fieldNumber,
+                  length: state.formFields.length,
+                })
+              }
               className="my-2 w-full rounded-xl bg-orange-500 p-2 text-center text-white hover:bg-orange-700"
             >
               Next
@@ -229,7 +295,9 @@ export function FormPreview(props: { id: number }) {
           </Link>
 
           <button
-            onClick={clearAll}
+            onClick={(_) =>
+              dispatchFormFields({ type: "clear_all", formFields })
+            }
             className="my-2  rounded-xl bg-yellow-500 p-2 text-center text-white hover:bg-yellow-700"
           >
             Clear All
