@@ -1,5 +1,5 @@
 import { Link, navigate } from "raviger";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useReducer } from "react";
 import InputContainer from "./InputContainer";
 import { formData } from "../interfaces/FormData";
 import { getLocalForms, saveLocalForms } from "../Storage";
@@ -44,10 +44,238 @@ const saveFormData = (currentState: formData) => {
   saveLocalForms(updatedLocalForms);
 };
 
+type AddAction = {
+  type: "add_field";
+  label: string;
+  kind: fieldTypes;
+  callback: () => void;
+};
+
+type RemoveAction = {
+  type: "remove_field";
+  id: number;
+};
+
+type UpdateTitleAction = {
+  type: "update_title";
+  title: string;
+};
+
+type UpdateOptionAction = {
+  type: "update_option";
+  optionId: number;
+  fieldId: number;
+  value: string;
+};
+
+type RemoveOptionAction = {
+  type: "remove_option";
+  optionId: number;
+  fieldId: number;
+};
+
+type UpdateLabelAction = {
+  type: "update_label";
+  id: number;
+  label: string;
+};
+
+type UpdateKindAction = {
+  type: "update_kind";
+  id: number;
+  kind: fieldTypes;
+};
+
+type UpdateTypeAction = {
+  type: "update_type";
+  id: number;
+  textKind: textFieldTypes;
+};
+
+type FormAction =
+  | AddAction
+  | RemoveAction
+  | UpdateTitleAction
+  | UpdateOptionAction
+  | RemoveOptionAction
+  | UpdateLabelAction
+  | UpdateKindAction
+  | UpdateTypeAction;
+
+const reducer = (state: formData, action: FormAction): formData => {
+  switch (action.type) {
+    case "add_field": {
+      let newField = action.label;
+      let newFieldType = action.kind;
+
+      if (newField.length > 0) {
+        action.callback();
+        if (newFieldType === "text") {
+          return {
+            ...state,
+            formFields: [
+              ...state.formFields,
+              {
+                kind: "text",
+                id: Number(new Date()),
+                label: newField,
+                fieldType: "text",
+                value: "",
+              },
+            ],
+          };
+        } else if (newFieldType === "textArea") {
+          return {
+            ...state,
+            formFields: [
+              ...state.formFields,
+              {
+                kind: "textArea",
+                id: Number(new Date()),
+                label: newField,
+                value: "",
+                fieldType: "text",
+              },
+            ],
+          };
+        } else if (
+          newFieldType === "radioInput" ||
+          newFieldType === "multipleSelect" ||
+          newFieldType === "dropdown"
+        ) {
+          return {
+            ...state,
+            formFields: [
+              ...state.formFields,
+              {
+                kind: newFieldType,
+                id: Number(new Date()),
+                label: newField,
+                value: "",
+                options: [],
+              },
+            ],
+          };
+        }
+      }
+      return state;
+    }
+
+    case "remove_field": {
+      return {
+        ...state,
+        formFields: state.formFields.filter((field) => field.id !== action.id),
+      };
+    }
+
+    case "update_title": {
+      return {
+        ...state,
+        title: action.title,
+      };
+    }
+
+    case "update_option": {
+      return {
+        ...state,
+        formFields: state.formFields.map((field) => {
+          if (
+            field.id === action.fieldId &&
+            (field.kind === "dropdown" ||
+              field.kind === "multipleSelect" ||
+              field.kind === "radioInput")
+          ) {
+            if (action.optionId < field.options.length) {
+              field.options[action.optionId] = action.value;
+            } else {
+              field.options.push(action.value);
+            }
+            return field;
+          }
+          return field;
+        }),
+      };
+    }
+
+    case "remove_option": {
+      return {
+        ...state,
+        formFields: state.formFields.map((field) => {
+          if (
+            field.id === action.fieldId &&
+            (field.kind === "dropdown" ||
+              field.kind === "multipleSelect" ||
+              field.kind === "radioInput")
+          ) {
+            field.options.splice(action.optionId, 1);
+          }
+          return field;
+        }),
+      };
+    }
+
+    case "update_label": {
+      return {
+        ...state,
+        formFields: state.formFields.map((field) => {
+          if (field.id === action.id) return { ...field, label: action.label };
+          return field;
+        }),
+      };
+    }
+
+    case "update_kind": {
+      return {
+        ...state,
+        formFields: state.formFields.map((field) => {
+          if (field.id === action.id) {
+            field.kind = action.kind;
+          }
+          return field;
+        }),
+      };
+    }
+
+    case "update_type": {
+      return {
+        ...state,
+        formFields: state.formFields.map((field) => {
+          if (field.id === action.id && field.kind === "text") {
+            field.fieldType = action.textKind;
+          }
+          return field;
+        }),
+      };
+    }
+  }
+};
+
+type ChangeText = {
+  type: "change_text";
+  value: string;
+};
+
+type ClearText = {
+  type: "clear_text";
+};
+
+type newFieldAction = ChangeText | ClearText;
+const newFieldReducer = (state: string, action: newFieldAction) => {
+  switch (action.type) {
+    case "change_text": {
+      return action.value;
+    }
+    case "clear_text":
+      return "";
+  }
+};
+
 export function Form(props: { id: number }) {
-  const [state, setState] = useState(() => initialState(props.id));
-  const [newField, setNewField] = useState("");
-  const [newFieldType, setNewFieldType] = useState("text");
+  const [state, dispatch] = useReducer(reducer, null, () =>
+    initialState(props.id)
+  );
+  const [newField, dispatchNewField] = useReducer(newFieldReducer, "");
+  const [newFieldType, setNewFieldType] = useState<fieldTypes>("text");
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -74,140 +302,11 @@ export function Form(props: { id: number }) {
     };
   }, [state]);
 
-  const addField = () => {
-    console.log(newField, newFieldType);
-    if (newField.length === 0) return;
-
-    if (newFieldType === "text") {
-      setState({
-        ...state,
-        formFields: [
-          ...state.formFields,
-          {
-            kind: "text",
-            id: Number(new Date()),
-            label: newField,
-            fieldType: "text",
-            value: "",
-          },
-        ],
-      });
-    } else if (newFieldType === "textArea") {
-      setState({
-        ...state,
-        formFields: [
-          ...state.formFields,
-          {
-            kind: "textArea",
-            id: Number(new Date()),
-            label: newField,
-            value: "",
-            fieldType: "text",
-          },
-        ],
-      });
-    } else if (
-      newFieldType === "radioInput" ||
-      newFieldType === "multipleSelect" ||
-      newFieldType === "dropdown"
-    ) {
-      setState({
-        ...state,
-        formFields: [
-          ...state.formFields,
-          {
-            kind: newFieldType,
-            id: Number(new Date()),
-            label: newField,
-            value: "",
-            options: [],
-          },
-        ],
-      });
-    }
-
-    setNewField("");
-    setNewFieldType("text");
-  };
-
-  const removeField = (id: number) => {
-    setState({
-      ...state,
-      formFields: state.formFields.filter((field) => field.id !== id),
-    });
-  };
-
-  const updateLabel = (id: number, label: string) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        if (field.id === id) return { ...field, label: label };
-        return field;
-      }),
-    });
-  };
-
-  const updateKind = (id: number, kind: fieldTypes) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        if (field.id === id) {
-          field.kind = kind;
-        }
-        return field;
-      }),
-    });
-  };
-  const updateType = (id: number, type: textFieldTypes) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        if (field.id === id && field.kind === "text") {
-          field.fieldType = type;
-        }
-        return field;
-      }),
-    });
-  };
-
-  const updateOption = (id: number, index: number, value: string) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        if (
-          field.id === id &&
-          (field.kind === "dropdown" ||
-            field.kind === "multipleSelect" ||
-            field.kind === "radioInput")
-        ) {
-          if (index < field.options.length) {
-            field.options[index] = value;
-          } else {
-            field.options.push(value);
-          }
-          return field;
-        }
-        return field;
-      }),
-    });
-  };
-
-  const removeOption = (id: number, index: number) => {
-    setState({
-      ...state,
-      formFields: state.formFields.map((field) => {
-        if (
-          field.id === id &&
-          (field.kind === "dropdown" ||
-            field.kind === "multipleSelect" ||
-            field.kind === "radioInput")
-        ) {
-          field.options.splice(index, 1);
-        }
-        return field;
-      }),
-    });
-  };
+  // const dispatchAction = (action: FormAction) => {
+  //   setState((prevState) => {
+  //     return reducer(prevState, action);
+  //   });
+  // };
 
   return (
     <div className="flex flex-col gap-2 divide-y-2 divide-dotted p-4">
@@ -217,7 +316,7 @@ export function Form(props: { id: number }) {
         value={state.title}
         className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
         onChange={(e) => {
-          setState({ ...state, title: e.target.value });
+          dispatch({ type: "update_title", title: e.target.value });
         }}
         ref={titleRef}
       />
@@ -232,9 +331,19 @@ export function Form(props: { id: number }) {
                   label={field.label}
                   type={field.fieldType}
                   value={field.value}
-                  removeFieldCB={removeField}
-                  updateLabelCB={updateLabel}
-                  updateTypeCB={updateType}
+                  removeFieldCB={(id) =>
+                    dispatch({ type: "remove_field", id: id })
+                  }
+                  updateLabelCB={(id, label) => {
+                    dispatch({ type: "update_label", id, label });
+                  }}
+                  updateTypeCB={(id, textKind) => {
+                    dispatch({
+                      type: "update_type",
+                      id,
+                      textKind,
+                    });
+                  }}
                 />
               );
             case "textArea":
@@ -245,41 +354,58 @@ export function Form(props: { id: number }) {
                   label={field.label}
                   value={field.value}
                   kind={field.kind}
-                  updateKindCB={updateKind}
-                  removeFieldCB={removeField}
-                  updateLabelCB={updateLabel}
-                  updateTypeCB={updateType}
+                  updateKindCB={(id, kind) => {
+                    dispatch({ type: "update_kind", id, kind });
+                  }}
+                  removeFieldCB={(id) =>
+                    dispatch({ type: "remove_field", id: id })
+                  }
+                  updateLabelCB={(id, label) => {
+                    dispatch({ type: "update_label", id, label });
+                  }}
+                  updateTypeCB={(id, textKind) => {
+                    dispatch({
+                      type: "update_type",
+                      id,
+                      textKind,
+                    });
+                  }}
                 />
               );
             case "dropdown":
             case "multipleSelect":
             case "radioInput":
               return (
-                // <select
-                //   className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
-                //   value={field.value}
-                //   onChange={(e) => {
-                //     updateLabel(field.id, e.target.value);
-                //   }}
-                // >
-                //   <option value="">Select an option</option>
-                //   {field.options.map((option, index) => (
-                //     <option key={index} value={option}>
-                //       {option}
-                //     </option>
-                //   ))}
-                // </select>
                 <MultiInputContainer
                   key={field.id}
                   id={field.id}
                   label={field.label}
                   kind={field.kind}
                   options={field.options}
-                  removeFieldCB={removeField}
-                  updateLabelCB={updateLabel}
-                  updateKindCB={updateKind}
-                  updateOptionCB={updateOption}
-                  removeOptionCB={removeOption}
+                  removeFieldCB={(id) =>
+                    dispatch({ type: "remove_field", id: id })
+                  }
+                  updateLabelCB={(id, label) => {
+                    dispatch({ type: "update_label", id, label });
+                  }}
+                  updateKindCB={(id, kind) => {
+                    dispatch({ type: "update_kind", id, kind });
+                  }}
+                  updateOptionCB={(fieldId, optionId, value) => {
+                    dispatch({
+                      type: "update_option",
+                      optionId,
+                      fieldId,
+                      value,
+                    });
+                  }}
+                  removeOptionCB={(optionId, fieldId) => {
+                    dispatch({
+                      type: "remove_option",
+                      optionId,
+                      fieldId,
+                    });
+                  }}
                 ></MultiInputContainer>
               );
           }
@@ -292,22 +418,14 @@ export function Form(props: { id: number }) {
           value={newField}
           className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
           onChange={(e) => {
-            setNewField(e.target.value);
+            dispatchNewField({ type: "change_text", value: e.target.value });
           }}
         />
-        {/* <input
-          placeholder="Form Field Type"
-          value={newFieldType}
-          className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
-          onChange={(e) => {
-            setNewFieldType(e.target.value);
-          }}
-        /> */}
         <select
           value={newFieldType}
           className="my-2 w-full flex-1 rounded-lg border-2 border-gray-200 p-2"
           onChange={(e) => {
-            setNewFieldType(e.target.value);
+            setNewFieldType(e.target.value as fieldTypes);
           }}
         >
           <option value="text">Text</option>
@@ -317,7 +435,16 @@ export function Form(props: { id: number }) {
           <option value="radioInput">Radio Input</option>
         </select>
         <button
-          onClick={addField}
+          onClick={(_) =>
+            dispatch({
+              type: "add_field",
+              label: newField,
+              kind: newFieldType,
+              callback: () => {
+                dispatchNewField({ type: "clear_text" });
+              },
+            })
+          }
           className="m-1 rounded-xl bg-blue-500 px-2 text-white hover:bg-blue-700"
         >
           Add Field
