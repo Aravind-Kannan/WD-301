@@ -399,11 +399,11 @@ export function Form(props: { id: number }) {
                       value,
                     });
                   }}
-                  removeOptionCB={(optionId, fieldId) => {
+                  removeOptionCB={(fieldId, optionId) => {
                     dispatch({
                       type: "remove_option",
-                      optionId,
                       fieldId,
+                      optionId,
                     });
                   }}
                 ></MultiInputContainer>
